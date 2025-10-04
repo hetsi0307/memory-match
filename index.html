@@ -5,12 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Glass Memory Match — Play Free</title>
 <meta name="description" content="A slick glassmorphism memory game with voice, keyboard & controller support.">
-<meta name="theme-color" content="#0a0f21">
+
+<!-- PWA + icons (root paths) -->
 <link rel="manifest" href="./manifest.json">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#0a0f21">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+
+<!-- Social share preview -->
 <meta property="og:title" content="Glass Memory Match">
 <meta property="og:description" content="Play by voice, keyboard, touch or gamepad.">
-<meta property="og:image" content="icons/icon-512.png">
+<meta property="og:image" content="icon-512.png">
+
 <style>
   :root{
     --bg:#0a0f21; --bg2:#0b132e; --text:#eaf3ff; --muted:#a8b2ce;
@@ -48,7 +54,8 @@
       <h1>Glass Memory Match</h1>
       <div class="actions">
         <button id="installBtn" class="ghost" hidden>Install App</button>
-        <a class="ghost" href="./game.html">Skip to Game</a>
+        <!-- keep links consistent with your game file name -->
+        <a class="ghost" href="./aigameglass.html">Skip to Game</a>
       </div>
     </header>
 
@@ -57,7 +64,7 @@
         <h2 class="title">A sleek memory game you can play by <em>voice</em>, <em>keys</em> or <em>gamepad</em>.</h2>
         <p class="muted">Glassmorphism UI, dark/light mode, spoken prompts, and gentle background music. Installable as a PWA.</p>
         <div class="cta">
-          <a class="btn" href="aigameglass.html">Play Now</a>
+          <a class="btn" href="./aigameglass.html">Play Now</a>
           <a class="ghost" href="#about">How it works</a>
         </div>
         <div class="grid">
