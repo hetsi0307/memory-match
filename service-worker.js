@@ -1,38 +1,57 @@
-const CACHE = 'mm-v3';  // bump version to force update
+// ===========================
+// Glass Memory Match Service Worker
+// ===========================
+
+const CACHE_NAME = 'mm-v3';  // update version to force refresh
 const ASSETS = [
   './',
   './index.html',
   './aigameglass.html',
   './manifest.json',
   './icon.192.png',
-  './icon.512.png'
+  './icon.512.png',
+  './style.css',  // if you have external CSS
+  './script.js'   // if you have external JS
 ];
 
-// Install
-self.addEventListener('install', e => {
+// Install event – cache all assets
+self.addEventListener('install', (event) => {
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
-});
-
-// Activate
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        return cache.addAll(ASSETS);
+      })
+      .catch(err => console.error('SW install error:', err))
   );
 });
 
-// Fetch
-self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(cached =>
-      cached || fetch(e.request).catch(() => {
-        if (e.request.mode === 'navigate') {
-          // fallback to landing page
-          return caches.match('./index.html');
-        }
+// Activate event – delete old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((keys) => {
+        return Promise.all(
+          keys.filter((key) => key !== CACHE_NAME)
+              .map((key) => caches.delete(key))
+        );
       })
-    )
+      .then(() => self.clients.claim())
+  );
+});
+
+// Fetch event – respond from cache, fallback to network
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request)
+      .then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).catch(() => {
+          // fallback to homepage for navigation requests
+          if (event.request.mode === 'navigate') {
+            return caches.match('./index.html');
+          }
+        });
+      })
   );
 });
