@@ -4,8 +4,8 @@ const ASSETS = [
   './index.html',
   './aigameglass.html',
   './manifest.json',
-  './installicon.png',
-  './installicon.png'
+  './icon.192.png',
+  './icon.512.png'
 ];
 
 // Install
