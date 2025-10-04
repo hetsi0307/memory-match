@@ -1,11 +1,11 @@
-const CACHE = 'mm-v1';
+const CACHE = 'mm-v2';  // bump version to force update
 const ASSETS = [
   './',
   './index.html',
   './aigameglass.html',
   './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icon-192.png',   // ← root paths
+  './icon-512.png'    // ← root paths
 ];
 
 self.addEventListener('install', e => {
