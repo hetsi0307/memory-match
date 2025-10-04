@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Glass Memory Match</title>
+<style>
+  /* ====== THEME (glassmorphism) ====== */
+  :root{
+    --bg:#0a0f21;
+    --bg2:#0b132e;
+    --text:#eaf3ff;
+    --muted:#a8b2ce;
+    --accent:#66f2ff;
+    --accent2:#98ffa7;
+    --ring: rgba(255,255,255,.28);
+    --glass: rgba(255,255,255,.10);
+    --glass-strong: rgba(255,255,255,.14);
+    --shadow: 0 10px 32px rgba(0,0,0,.45);
+    --inset: inset 0 1px 0 rgba(255,255,255,.18);
+
+    /* 3D & animation controls */
+    --flip-ms: 800ms;      /* flip duration */
+    --tilt-deg: 10deg;     /* max hover tilt */
+  }
+
+  *{box-sizing:border-box}
+  html,body{
+    height:100%;margin:0;color:var(--text);
+    font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;
+    background:
+      radial-gradient(1100px 700px at 75% -10%, #1b2554 0%, var(--bg) 60%),
+      radial-gradient(900px 600px at -10% 110%, #122a4a 0%, var(--bg2) 60%);
+    overflow-x:hidden;
+  }
+  body::before, body::after{
+    content:""; position:fixed; pointer-events:none; z-index:-1; filter:blur(80px); opacity:.55;
+    width:520px; height:520px; border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #66f2ff, #7e5cff 60%, transparent 70%);
+  }
+  body::after{ right:-160px; top:20%; transform:rotate(20deg) }
+  body::before{ left:-180px; bottom:-120px; background:radial-gradient(circle at 60% 40%, #98ffa7, #33d6ff 50%, transparent 70%) }
+
+  .wrap{max-width:980px;margin:0 auto;padding:18px}
+
+  .header{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+  h1{margin:0;font-size:22px;letter-spacing:.4px; font-weight:800}
+
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  button{
+    background:linear-gradient(90deg,var(--accent2),var(--accent));
+    color:#061020;border:0;border-radius:14px;padding:10px 14px;cursor:pointer;font-weight:800;
+    box-shadow:0 10px 26px rgba(102,242,255,.25);transition:transform .08s ease, filter .15s ease
+  }
+  button.ghost{
+    background:var(--glass-strong);
+    color:var(--text);
+    border:1px solid var(--ring);
+    box-shadow:var(--shadow); backdrop-filter:saturate(140%) blur(12px);
+  }
+  button:active{transform:translateY(1px)}
+  .pill{
+    background:var(--glass);
+    border:1px solid var(--ring);
+    border-radius:14px;padding:8px 12px;
+    box-shadow:var(--shadow); backdrop-filter:saturate(140%) blur(12px);
+  }
+
+  .hud{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+  .cardHUD{
+    background:var(--glass);
+    border:1px solid var(--ring); border-radius:16px; padding:10px 12px;
+    display:flex;align-items:center;justify-content:space-between;
+    box-shadow:var(--shadow); backdrop-filter:saturate(150%) blur(12px);
+  }
+  .label{color:var(--muted);font-size:13px}
+  .value{font-size:18px;font-weight:800}
+
+  .boardWrap{
+    margin-top:14px;border-radius:20px;padding:14px;
+    background:var(--glass);
+    border:1px solid var(--ring);
+    box-shadow:var(--shadow); backdrop-filter:saturate(140%) blur(16px);
+    position:relative; overflow:hidden; isolation:isolate;
+  }
+  .boardWrap::after{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background:
+      radial-gradient(60% 40% at 30% -10%, rgba(255,255,255,.08), transparent 60%),
+      radial-gradient(60% 40% at 70% 110%, rgba(255,255,255,.06), transparent 60%);
+  }
+
+  .board{
+    display:grid;gap:12px;place-items:center;user-select:none;touch-action:manipulation;min-height:420px
+  }
+
+  /* ====== GLASS TILES + 3D ====== */
+  .tile{
+    width:100%;aspect-ratio:1/1;border-radius:18px;position:relative;perspective:900px;cursor:pointer;outline-offset:3px;
+    border:1px solid rgba(255,255,255,.12); background:transparent;
+    --rx: 0deg; --ry: 0deg; --ty: 0px; --scale: 1; --px: 50%; --py: 50%;
+    transform: translateY(var(--ty)) rotateX(var(--rx)) rotateY(var(--ry)) scale(var(--scale));
+    transition: transform .18s ease, box-shadow .18s ease, filter .18s ease; will-change: transform;
+  }
+  .tile:focus-visible{outline:2px solid var(--accent)}
+  .tile:hover{ --ty: -2px; }
+  .tile:active{ --scale: .985; }
+
+  .tile::after{
+    content:""; position:absolute; inset:0; border-radius:18px; pointer-events:none;
+    background: radial-gradient(300px 200px at var(--px) var(--py), rgba(255,255,255,.24), rgba(255,255,255,0) 60%);
+    opacity:.35; mix-blend-mode:screen; transition:opacity .25s ease;
+  }
+  .tile:hover::after{opacity:.6}
+
+  .tileInner{
+    position:absolute;inset:0;transform-style:preserve-3d;
+    transition: transform var(--flip-ms) cubic-bezier(.2,.7,.2,1);
+    will-change: transform;
+  }
+  .tile.flipped .tileInner, .tile.matched .tileInner{transform:rotateY(180deg)}
+
+  .face{
+    position:absolute;inset:0;display:grid;place-items:center;border-radius:18px;backface-visibility:hidden;font-size:34px;
+    background:var(--glass); border:1px solid var(--ring); box-shadow:var(--shadow), var(--inset);
+    backdrop-filter:saturate(160%) blur(16px);
+    font-family:"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji",system-ui,sans-serif;
+  }
+  .front{ transform: translateZ(2px); color:#cfe6ff; overflow:hidden; }
+  .front::before{
+    content:""; position:absolute; inset:0; border-radius:18px;
+    background:linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,0) 40%);
+    mix-blend-mode:overlay; pointer-events:none;
+  }
+  .back{ transform: rotateY(180deg) translateZ(2px); font-size:42px; }
+
+  .matched{ animation: pop3d .35s ease; }
+  @keyframes pop3d{
+    0%{ transform: translateY(var(--ty)) rotateX(var(--rx)) rotateY(var(--ry)) scale(1); }
+    45%{ transform: translateY(var(--ty)) rotateX(var(--rx)) rotateY(var(--ry)) scale(1.06); }
+    100%{ transform: translateY(var(--ty)) rotateX(var(--rx)) rotateY(var(--ry)) scale(1); }
+  }
+
+  .overlay{position:relative}
+  .screen{
+    position:absolute; inset:0; display:grid; place-items:center; padding:16px; z-index:20;
+    background:rgba(8,12,26,.55); backdrop-filter:blur(6px) saturate(120%);
+  }
+  .hidden{display:none}
+  .box{
+    background:rgba(255,255,255,.22); border:1px solid rgba(255,255,255,.38);
+    border-radius:18px; padding:18px; max-width:520px; text-align:center;
+    box-shadow:0 24px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.25);
+    backdrop-filter:saturate(150%) blur(14px);
+  }
+  .box h2{margin:0 0 8px 0}
+  .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+
+  @media (prefers-reduced-motion: reduce){
+    .tile, .tileInner{transition:none}
+    .tile{ --rx:0deg; --ry:0deg; }
+    .tile::after{ display:none; }
+  }
+  @media (max-width:740px){.hud{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <h1>Glass Memory Match</h1>
+      <div class="controls">
+        <span class="pill">Pick difficulty • flip & match pairs</span>
+        <button id="newGame">New Game</button>
+        <button id="musicBtn" class="ghost" aria-pressed="false" title="Toggle background music">Music: Off</button>
+      </div>
+    </div>
+
+    <div class="hud">
+      <div class="cardHUD"><span class="label">moves</span><span class="value" id="moves">0</span></div>
+      <div class="cardHUD"><span class="label">time</span><span class="value" id="time">0.0s</span></div>
+      <div class="cardHUD"><span class="label">pairs left</span><span class="value" id="left">0</span></div>
+      <div class="cardHUD"><span class="label">difficulty</span><span class="value" id="diffLabel">easy</span></div>
+    </div>
+
+    <div class="controls" style="margin-top:10px">
+      <button class="ghost diff" data-d="easy">Easy</button>
+      <button class="ghost diff" data-d="hard">Hard</button>
+      <button class="ghost diff" data-d="difficult">Difficult</button>
+      <span class="pill" id="bestBox">best: —</span>
+    </div>
+
+    <div class="boardWrap overlay">
+      <div id="board" class="board" aria-label="memory board"></div>
+      <div id="menu" class="screen">
+        <div class="box">
+          <h2>ready to play? 🧊</h2>
+          <p>Flip two frosted tiles to find matching forest friends. Clear the board fast!</p>
+          <div class="row"><button id="startBtn">Start</button></div>
+        </div>
+      </div>
+      <div id="win" class="screen hidden">
+        <div class="box">
+          <h2>you did it! ✨</h2>
+          <p id="winStats">00 moves • 00.0s</p>
+          <div class="row">
+            <button id="again">Play again</button>
+            <button id="share" class="ghost">Copy result</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+(() => {
+  // Emoji list (safe across devices)
+  const EMOJI = ["🦊","🦉","🐻","🦌","🦔","🐸","🦅","🦋","🐝","🍄","🌿","🌼","🌰","🍓","🌧️","🌙","🐦","🍁"];
+
+  // >>> Difficulty sizes updated:
+  // easy: 12 cards, hard: 20 cards, difficult: 30 cards
+  const DIFFS = {
+    easy:      {rows: 3, cols: 4},   // 12 cards / 6 pairs
+    hard:      {rows: 4, cols: 5},   // 20 cards / 10 pairs (medium)
+    difficult: {rows: 5, cols: 6},   // 30 cards / 15 pairs (most)
+  };
+
+  const FLIP_MS = 800;    // keep synced with CSS --flip-ms
+  const TILT_MAX = 10;    // deg
+
+  let difficulty = 'easy';
+  let deck = [];
+  let first = null, second = null;
+  let lock = false;
+  let moves = 0, matchedPairs = 0, totalPairs = 0;
+  let timerId = null, startTime = 0, elapsed = 0;
+  let running = false;
+  let musicAutoStarted = false;
+
+  const board = document.getElementById('board');
+  const movesEl = document.getElementById('moves');
+  const timeEl = document.getElementById('time');
+  const leftEl = document.getElementById('left');
+  const diffLabel = document.getElementById('diffLabel');
+  const bestBox = document.getElementById('bestBox');
+
+  const startBtn = document.getElementById('startBtn');
+  const newGame = document.getElementById('newGame');
+  const again = document.getElementById('again');
+  const share = document.getElementById('share');
+  const musicBtn = document.getElementById('musicBtn');
+
+  const menu = document.getElementById('menu');
+  const win = document.getElementById('win');
+  const winStats = document.getElementById('winStats');
+  const diffBtns = Array.from(document.querySelectorAll('.diff'));
+
+  /* ---------- Light background music (Web Audio) ---------- */
+  const Music = (() => {
+    let ctx, master, isOn=false, started=false, schedulerId=null, nextTime=0, beat=1, chordIndex=0;
+    const chords = [
+      [220.00, 261.63, 329.63], [174.61, 220.00, 261.63],
+      [130.81, 164.81, 196.00], [196.00, 246.94, 293.66],
+    ];
+    function init(){ if (ctx) return;
+      ctx = new (window.AudioContext||window.webkitAudioContext)();
+      master = ctx.createGain(); master.gain.value = 0.0; master.connect(ctx.destination);
+      beat = 60 / 60; nextTime = ctx.currentTime + 0.1;
+    }
+    function start(){ if (!ctx) init(); ctx.resume();
+      if (!started){ started = true; isOn = true; schedulerId = setInterval(scheduleAhead, 200); }
+      setOn(true);
+    }
+    function setOn(v){ isOn = v; if (!ctx) return;
+      const now = ctx.currentTime; const target = v ? 0.12 : 0.0;
+      master.gain.cancelScheduledValues(now); master.gain.linearRampToValueAtTime(target, now + 0.4);
+    }
+    function scheduleAhead(){ if (!isOn) return;
+      while (nextTime < ctx.currentTime + 1.0){ scheduleBar(nextTime); nextTime += 4*beat; chordIndex = (chordIndex + 1) % chords.length; }
+    }
+    function scheduleBar(t){ const ch = chords[chordIndex]; pad(ch, t, 4*beat); plink(ch[1]*2, t + 1*beat); plink(ch[2]*2.1, t + 2.5*beat); }
+    function pad(ch, t, dur){ ch.forEach(f => note(f, dur, t, 'sine', 0.03)); }
+    function plink(freq, t){ note(freq, 0.35, t, 'triangle', 0.02); }
+    function note(freq, dur, t, type, vol){
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = type; o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
+    }
+    return { start, setOn, get on(){ return isOn; } };
+  })();
+
+  function setMusicButton(stateOn){
+    musicBtn.textContent = stateOn ? 'Music: On' : 'Music: Off';
+    musicBtn.setAttribute('aria-pressed', stateOn ? 'true' : 'false');
+  }
+
+  /* ---------- Helpers & game logic ---------- */
+  function shuffle(a){ for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+  function bestKey(){ return `glassmem_best_${difficulty}`; }
+  function fmtTime(sec){ return `${sec.toFixed(1)}s`; }
+  function updateBestBox(){ const b = localStorage.getItem(bestKey()); bestBox.textContent = b ? `best: ${fmtTime(Number(b))}` : 'best: —'; }
+
+  function makeDeck(pairs){
+    const pool = [...EMOJI]; shuffle(pool);
+    const pick = pool.slice(0,pairs);
+    return shuffle(pick.concat(pick)).map((icon, idx)=>({id: idx, icon, matched:false}));
+  }
+
+  function enable3D(tile){
+    function move(e){
+      const r = tile.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      const dx = (x / r.width) - 0.5, dy = (y / r.height) - 0.5;
+      tile.style.setProperty('--ry', `${dx * 10}deg`);
+      tile.style.setProperty('--rx', `${-dy * 10}deg`);
+      tile.style.setProperty('--px', `${x}px`);
+      tile.style.setProperty('--py', `${y}px`);
+    }
+    function leave(){
+      tile.style.setProperty('--ry', `0deg`);
+      tile.style.setProperty('--rx', `0deg`);
+      tile.style.removeProperty('--px');
+      tile.style.removeProperty('--py');
+    }
+    tile.addEventListener('pointermove', move);
+    tile.addEventListener('pointerleave', leave);
+  }
+
+  function buildBoard(){
+    const {rows, cols} = DIFFS[difficulty];
+    totalPairs = (rows*cols)/2;
+    deck = makeDeck(totalPairs);
+
+    board.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    board.innerHTML = '';
+
+    deck.forEach((card)=>{
+      const tile = document.createElement('button');
+      tile.className = 'tile'; tile.setAttribute('aria-label','card'); tile.dataset.id = card.id;
+      tile.innerHTML = `
+        <div class="tileInner">
+          <div class="face front">★</div>
+          <div class="face back">${card.icon}</div>
+        </div>`;
+      tile.addEventListener('click', ()=> flip(tile, card));
+      enable3D(tile);
+      board.appendChild(tile);
+    });
+
+    moves = 0; matchedPairs = 0; elapsed = 0;
+    movesEl.textContent = moves; timeEl.textContent = fmtTime(0);
+    leftEl.textContent = totalPairs; diffLabel.textContent = difficulty;
+    updateBestBox();
+  }
+
+  function startTimer(){
+    stopTimer();
+    startTime = performance.now();
+    timerId = setInterval(()=>{ elapsed = (performance.now() - startTime)/1000; timeEl.textContent = fmtTime(elapsed); }, 100);
+  }
+  function stopTimer(){ if (timerId){ clearInterval(timerId); timerId = null; } }
+
+  function startGame(){
+    running = true;
+    first = second = null; lock = false;
+    buildBoard();
+    menu.classList.add('hidden'); win.classList.add('hidden'); startTimer();
+    if (!musicAutoStarted){ Music.start(); setMusicButton(true); musicAutoStarted = true; }
+  }
+
+  function endGame(){
+    running = false; stopTimer();
+    const key = bestKey(); const prev = Number(localStorage.getItem(key) || Infinity);
+    if (elapsed < prev) localStorage.setItem(key, String(elapsed));
+    updateBestBox(); winStats.textContent = `${moves} moves • ${fmtTime(elapsed)}`;
+    win.classList.remove('hidden');
+  }
+
+  function flip(tile, card){
+    if (!running || lock || card.matched) return;
+    if (first && tile === first.tile) return;
+    tile.classList.add('flipped');
+
+    if (!first){
+      first = {tile, card}; if (!timerId) startTimer(); return;
+    }
+
+    second = {tile, card}; moves++; movesEl.textContent = moves; lock = true;
+
+    if (first.card.icon === second.card.icon){
+      first.card.matched = second.card.matched = true;
+      first.tile.classList.add('matched'); second.tile.classList.add('matched');
+      matchedPairs++; leftEl.textContent = totalPairs - matchedPairs;
+
+      setTimeout(()=>{ first = second = null; lock = false; if (matchedPairs === totalPairs) endGame(); }, Math.round(FLIP_MS * 0.65));
+    }else{
+      setTimeout(()=>{ first.tile.classList.remove('flipped'); second.tile.classList.remove('flipped'); first = second = null; lock = false; }, FLIP_MS + 250);
+    }
+  }
+
+  startBtn.addEventListener('click', startGame);
+  newGame.addEventListener('click', startGame);
+  again.addEventListener('click', startGame);
+  share.addEventListener('click', async ()=>{
+    const text = `I beat Glass Memory Match on ${difficulty} in ${fmtTime(elapsed)} with ${moves} moves. 🧊`;
+    try{ await navigator.clipboard.writeText(text); }catch{}
+  });
+
+  diffBtns.forEach(b=>{
+    b.addEventListener('click', ()=>{
+      difficulty = b.dataset.d;
+      diffBtns.forEach(x=>x.style.filter=''); b.style.filter='brightness(1.05)';
+      buildBoard();
+    });
+  });
+
+  musicBtn.addEventListener('click', ()=>{
+    if (Music.on){ Music.setOn(false); setMusicButton(false); }
+    else { Music.start(); setMusicButton(true); }
+  });
+
+  buildBoard();
+})();
+</script>
+</body>
+</html>
