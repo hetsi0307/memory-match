@@ -194,155 +194,131 @@ let isListening = false;
 let continuousMode = false;
 const synth = window.speechSynthesis;
 
-// TTS helper (used by welcome + feedback)
+// TTS helper
 function speak(text) {
-  if (!('speechSynthesis' in window)) { showStatus(`🔊 ${text}`); setTimeout(hideStatus, 2000); return; }
+  if (!('speechSynthesis' in window)) { showStatus(`🔊 ${text}`); setTimeout(hideStatus,2000); return; }
   synth.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.rate = 1.0; u.pitch = 1.0; u.volume = 1.0;
+  u.rate=1.0; u.pitch=1.0; u.volume=1.0;
   showStatus(`🔊 ${text}`);
-  u.onend = () => setTimeout(hideStatus, 1600);
+  u.onend=()=>setTimeout(hideStatus,1600);
   synth.speak(u);
 }
 
-// Init Speech Recognition (Chrome/Edge desktop + some Android)
+// Init Speech Recognition
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SpeechRecognition();
-  recognition.continuous = false;
-  recognition.interimResults = false;
-  recognition.lang = 'en-US';
+  recognition.continuous=false;
+  recognition.interimResults=false;
+  recognition.lang='en-US';
 
-  recognition.onstart = () => {
-    isListening = true;
+  recognition.onstart=()=>{
+    isListening=true;
     voiceBtn.classList.add('listening');
-    voiceBtn.textContent = '🎙️';
+    voiceBtn.textContent='🎙️';
     showIndicator('Listening…');
   };
-  recognition.onend = () => {
-    isListening = false;
+  recognition.onend=()=>{
+    isListening=false;
     voiceBtn.classList.remove('listening');
-    voiceBtn.textContent = '🎤';
+    voiceBtn.textContent='🎤';
     hideIndicator();
-    if (continuousMode) setTimeout(() => { try { recognition.start(); } catch(e){} }, 250);
+    if (continuousMode) setTimeout(()=>{try{recognition.start();}catch(e){}},250);
   };
-  recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript.toLowerCase().trim();
-    console.log('Heard:', transcript);
+  recognition.onresult=(event)=>{
+    const transcript=event.results[0][0].transcript.toLowerCase().trim();
+    console.log('Heard:',transcript);
     showStatus(`You said: “${transcript}”`);
     processVoiceCommand(transcript);
   };
-  recognition.onerror = (event) => {
-    console.warn('Speech error:', event.error);
+  recognition.onerror=(event)=>{
+    console.warn('Speech error:',event.error);
     showStatus(`Error: ${event.error}`);
-    setTimeout(hideStatus, 2000);
+    setTimeout(hideStatus,2000);
   };
-} else {
-  // No speech recognition (iOS Safari etc.)
-  voiceBtn.style.display = 'none';
-}
+} else { voiceBtn.style.display='none'; }
 
 // Toggle mic by button
-voiceBtn.addEventListener('click', () => {
-  if (!recognition) return;
-  if (isListening) recognition.stop(); else recognition.start();
+voiceBtn.addEventListener('click',()=>{
+  if(!recognition) return;
+  if(isListening) recognition.stop(); else recognition.start();
 });
 
 // Keyboard shortcuts
-document.addEventListener('keydown', (e) => {
-  const k = e.key.toLowerCase();
-  if (k === 'v') voiceBtn.click();          // toggle voice
-  else if (k === 'p') navigateToGame();     // play
-  else if (k === 'i' && !installBtn.hidden) installBtn.click(); // install
+document.addEventListener('keydown',(e)=>{
+  const k=e.key.toLowerCase();
+  if(k==='v') voiceBtn.click();
+  else if(k==='p') navigateToGame();
+  else if(k==='i' && !installBtn.hidden) installBtn.click();
 });
 
 // Command handler
-function processVoiceCommand(raw) {
-  const cmd = raw.replace(/[.,!?]/g, '').trim();
+function processVoiceCommand(raw){
+  const cmd=raw.replace(/[.,!?]/g,'').trim();
 
-  if (cmd.includes('hey game') || cmd.includes('hi game') || cmd.includes('ok game')) {
-    continuousMode = true; speak("I'm listening"); return;
+  if(cmd.includes('hey game')||cmd.includes('hi game')||cmd.includes('ok game')){
+    continuousMode=true; speak("I'm listening"); return;
   }
-  if (cmd.includes('stop listening') || cmd.includes('quiet')) {
-    continuousMode = false; if (isListening && recognition) recognition.stop(); speak('Stopping listening'); return;
-  }
-
-  if (/(play now|play|start|begin|open game|go)$/.test(cmd)) {
-    speak('Starting the game'); setTimeout(navigateToGame, 600); return;
+  if(cmd.includes('stop listening')||cmd.includes('quiet')){
+    continuousMode=false; if(isListening&&recognition) recognition.stop(); speak('Stopping listening'); return;
   }
 
-  if (cmd.includes('install') || cmd.includes('download app') || cmd.includes('add to home')) {
-    if (!installBtn.hidden) { speak('Installing app'); installBtn.click(); }
-    else { speak('Install is not available or already installed'); }
-    return;
+  if(/(play now|play|start|begin|open game|go)$/.test(cmd)){
+    speak('Starting the game'); setTimeout(navigateToGame,600); return;
   }
 
-  if (cmd === 'help' || cmd.includes('how it works') || cmd.includes('about') || cmd.includes('instructions')) {
+  if(cmd.includes('install')||cmd.includes('download app')||cmd.includes('add to home')){
+    if(!installBtn.hidden){speak('Installing app'); installBtn.click();}
+    else {speak('Install is not available or already installed');} return;
+  }
+
+  if(cmd==='help'||cmd.includes('how it works')||cmd.includes('about')||cmd.includes('instructions')){
     speak('Say play now, install app, scroll down, scroll up, top, or bottom. You can also press V to toggle the mic.');
-    document.getElementById('about').scrollIntoView({ behavior: 'smooth' });
-    return;
+    document.getElementById('about').scrollIntoView({behavior:'smooth'}); return;
   }
 
-  if (cmd.includes('scroll down')) { window.scrollBy({ top: window.innerHeight*0.8, behavior:'smooth' }); return; }
-  if (cmd.includes('scroll up'))   { window.scrollBy({ top:-window.innerHeight*0.8, behavior:'smooth' }); return; }
-  if (cmd.includes('bottom'))      { window.scrollTo({ top: document.body.scrollHeight, behavior:'smooth' }); return; }
-  if (cmd.includes('top') || cmd.includes('home') || cmd.includes('beginning')) {
-    window.scrollTo({ top: 0, behavior:'smooth' }); return;
-  }
+  if(cmd.includes('scroll down')){window.scrollBy({top:window.innerHeight*0.8,behavior:'smooth'}); return;}
+  if(cmd.includes('scroll up')){window.scrollBy({top:-window.innerHeight*0.8,behavior:'smooth'}); return;}
+  if(cmd.includes('bottom')){window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}); return;}
+  if(cmd.includes('top')||cmd.includes('home')||cmd.includes('beginning')){window.scrollTo({top:0,behavior:'smooth'}); return;}
 
   speak("Sorry, I didn't catch that. Try: play now, install app, help, scroll down.");
 }
 
 // Navigation helper
-function navigateToGame(){ window.location.href = './aigameglass.html'; }
+function navigateToGame(){ window.location.href='./aigameglass.html'; }
 
 // UI helpers
-function showIndicator(t){ voiceIndicator.textContent = t; voiceIndicator.classList.add('show'); }
-function hideIndicator(){ voiceIndicator.classList.remove('show'); }
-function showStatus(t){ voiceStatus.textContent = t; voiceStatus.classList.add('show'); }
-function hideStatus(){ voiceStatus.classList.remove('show'); }
+function showIndicator(t){voiceIndicator.textContent=t; voiceIndicator.classList.add('show');}
+function hideIndicator(){voiceIndicator.classList.remove('show');}
+function showStatus(t){voiceStatus.textContent=t; voiceStatus.classList.add('show');}
+function hideStatus(){voiceStatus.classList.remove('show');}
 
-// --- One-line welcome on open (with mobile-friendly fallback) ---
-const WELCOME_LINE = 'Welcome to Glass Memory Match. Tap Play Now to begin, or speak play.';
-let welcomed = false;
-function tryWelcome(){
-  if (welcomed) return;
-  welcomed = true;
-  speak(WELCOME_LINE);
-}
-window.addEventListener('load', () => {
-  if (!('speechSynthesis' in window)) return;
-  const s = window.speechSynthesis;
-  const fire = () => { tryWelcome(); };
-  if (s.getVoices().length > 0) setTimeout(fire, 600);
-  else s.addEventListener('voiceschanged', () => setTimeout(fire, 300), { once:true });
-});
-// Fallback if autoplay is blocked (common on mobile): first interaction
-['click','touchstart','keydown'].forEach(evt => {
-  window.addEventListener(evt, tryWelcome, { once:true, passive:true });
-});
+// --- Mobile-friendly first interaction ---
+const WELCOME_LINE='Welcome to Glass Memory Match. Tap anywhere to begin, or speak play.';
+let firstInteraction=false;
 
-  // --- Force welcome line after first user interaction (works on mobile) ---
-function enableSpeechAfterInteraction() {
-  try {
-    // Attempt immediate playback if possible
-    speak(WELCOME_LINE);
-  } catch (e) {
-    console.warn('Speech synthesis blocked until interaction.');
+function handleFirstInteraction(){
+  if(firstInteraction) return;
+  firstInteraction=true;
+
+  if('speechSynthesis' in window){
+    const utter=new SpeechSynthesisUtterance(WELCOME_LINE);
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utter);
   }
 
-  // Clean up after first interaction
-  ['click','touchstart','keydown'].forEach(evt =>
-    window.removeEventListener(evt, enableSpeechAfterInteraction)
-  );
+  if(recognition){
+    try{recognition.start();}catch(e){console.warn('Voice start error:',e);}
+  }
+
+  ['click','touchstart'].forEach(evt=>window.removeEventListener(evt,handleFirstInteraction));
 }
 
-['click','touchstart','keydown'].forEach(evt =>
-  window.addEventListener(evt, enableSpeechAfterInteraction, { once:true, passive:true })
-);
+// Attach to whole page
+['click','touchstart'].forEach(evt=>window.addEventListener(evt,handleFirstInteraction,{once:true,passive:true}));
 
 </script>
 </body>
 </html>
-
-
