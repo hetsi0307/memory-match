@@ -6,134 +6,325 @@
 <title>Glass Memory Match — Play Free</title>
 <meta name="description" content="A slick glassmorphism memory game with voice, keyboard & controller support.">
 
-<!-- PWA + icons (root paths) -->
+<!-- PWA manifest & icons -->
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0a0f21">
 <link rel="apple-touch-icon" href="icon.192.png">
 <link rel="icon" href="icon.512.png">
 
-<!-- Social share preview -->
-<meta property="og:title" content="Glass Memory Match">
-<meta property="og:description" content="Play by voice, keyboard, touch or gamepad.">
-<meta property="og:image" content="icon.512.png">
-
 <style>
-  :root{
-    --bg:#0a0f21; --bg2:#0b132e; --text:#eaf3ff; --muted:#a8b2ce;
-    --accent:#66f2ff; --accent2:#98ffa7; --ring:rgba(255,255,255,.25);
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;height:100%;color:var(--text);font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;
-    background:
-      radial-gradient(1100px 700px at 75% -10%, #1b2554 0%, var(--bg) 60%),
-      radial-gradient(900px 600px at -10% 110%, #122a4a 0%, var(--bg2) 60%);}
-  .wrap{max-width:1100px;margin:0 auto;padding:28px}
-  header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-  h1{margin:0;font-weight:800;letter-spacing:.3px}
-  .btn{background:linear-gradient(90deg,var(--accent2),var(--accent));color:#061020;border:0;border-radius:14px;padding:12px 18px;font-weight:800;cursor:pointer;box-shadow:0 10px 26px rgba(102,242,255,.25)}
-  .ghost{background:rgba(255,255,255,.14);color:var(--text);border:1px solid var(--ring);backdrop-filter:saturate(140%) blur(10px);border-radius:14px;padding:10px 14px}
-  .hero{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:center;margin-top:28px}
-  .card{background:rgba(255,255,255,.12);border:1px solid var(--ring);backdrop-filter:saturate(140%) blur(12px);border-radius:18px;padding:20px;box-shadow:0 18px 40px rgba(0,0,0,.45)}
-  .title{font-size:40px;line-height:1.1;margin:0 0 10px}
-  .muted{color:var(--muted)}
-  .cta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
-  .feature{background:rgba(255,255,255,.10);border:1px solid var(--ring);border-radius:14px;padding:14px;text-align:center}
-  .shot{aspect-ratio:16/10;border-radius:16px;background:
-      radial-gradient(60% 40% at 30% -10%, rgba(255,255,255,.08), transparent 60%),
-      radial-gradient(60% 40% at 70% 110%, rgba(255,255,255,.06), transparent 60%),
-      linear-gradient(180deg,#24345e,#182648)}
-  footer{margin:34px 0 10px;color:var(--muted);text-align:center}
-  @media (max-width:900px){.hero{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}}
-  @media (max-width:560px){.grid{grid-template-columns:1fr}}
+:root{
+  --bg:#0a0f21; --bg2:#0b132e; --text:#eaf3ff; --muted:#a8b2ce;
+  --accent:#66f2ff; --accent2:#98ffa7; --ring:rgba(255,255,255,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;color:var(--text);font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;
+  background:
+    radial-gradient(1100px 700px at 75% -10%, #1b2554 0%, var(--bg) 60%),
+    radial-gradient(900px 600px at -10% 110%, #122a4a 0%, var(--bg2) 60%);}
+.wrap{max-width:1100px;margin:0 auto;padding:28px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-weight:800;letter-spacing:.3px}
+.btn{background:linear-gradient(90deg,var(--accent2),var(--accent));color:#061020;border:0;border-radius:14px;padding:12px 18px;font-weight:800;cursor:pointer;box-shadow:0 10px 26px rgba(102,242,255,.25)}
+.ghost{background:rgba(255,255,255,.14);color:var(--text);border:1px solid var(--ring);backdrop-filter:saturate(140%) blur(10px);border-radius:14px;padding:10px 14px}
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:center;margin-top:28px}
+.card{background:rgba(255,255,255,.12);border:1px solid var(--ring);backdrop-filter:saturate(140%) blur(12px);border-radius:18px;padding:20px;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.title{font-size:40px;line-height:1.1;margin:0 0 10px}
+.muted{color:var(--muted)}
+.cta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+.feature{background:rgba(255,255,255,.10);border:1px solid var(--ring);border-radius:14px;padding:14px;text-align:center}
+.shot{aspect-ratio:16/10;border-radius:16px;background:
+    radial-gradient(60% 40% at 30% -10%, rgba(255,255,255,.08), transparent 60%),
+    radial-gradient(60% 40% at 70% 110%, rgba(255,255,255,.06), transparent 60%),
+    linear-gradient(180deg,#24345e,#182648)}
+footer{margin:34px 0 10px;color:var(--muted);text-align:center}
+
+/* Voice UI Styles */
+.voice-controls{position:fixed;bottom:24px;right:24px;z-index:1000}
+.voice-btn{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));
+  border:3px solid rgba(255,255,255,.3);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 12px 32px rgba(102,242,255,.4);transition:all .3s ease;font-size:28px}
+.voice-btn:hover{transform:scale(1.08);box-shadow:0 16px 40px rgba(102,242,255,.6)}
+.voice-btn.listening{animation:pulse 1.5s infinite;background:linear-gradient(135deg,#ff6b6b,#ff8e53)}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.voice-indicator{position:absolute;top:-40px;right:0;background:rgba(255,255,255,.95);color:#061020;
+  padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap;
+  box-shadow:0 4px 12px rgba(0,0,0,.3);opacity:0;transition:opacity .3s}
+.voice-indicator.show{opacity:1}
+.voice-status{position:absolute;bottom:90px;right:0;background:rgba(255,255,255,.12);backdrop-filter:blur(12px);
+  border:1px solid var(--ring);border-radius:12px;padding:12px 16px;min-width:200px;opacity:0;
+  transition:opacity .3s;color:var(--text);font-size:14px}
+.voice-status.show{opacity:1}
+
+@media (max-width:900px){.hero{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.grid{grid-template-columns:1fr}.voice-controls{bottom:16px;right:16px}.voice-btn{width:56px;height:56px;font-size:24px}}
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Glass Memory Match</h1>
-      <div class="actions">
-        <button id="installBtn" class="ghost" hidden>Install App</button>
-        <!-- keep links consistent with your game file name -->
-        <a class="ghost" href="./aigameglass.html">Skip to Game</a>
-      </div>
-    </header>
+<div class="wrap">
+  <header>
+    <h1>Glass Memory Match</h1>
+    <div class="actions">
+      <button id="installBtn" class="ghost" hidden>Install App</button>
+      <a class="ghost" href="./aigameglass.html">Skip to Game</a>
+    </div>
+  </header>
 
-    <section class="hero">
-      <div class="card">
-        <h2 class="title">A sleek memory game you can play by <em>voice</em>, <em>keys</em> or <em>gamepad</em>.</h2>
-        <p class="muted">Glassmorphism UI, dark/light mode, spoken prompts, and gentle background music. Installable as a PWA.</p>
-        <div class="cta">
-          <a class="btn" href="./aigameglass.html">Play Now</a>
-          <a class="ghost" href="#about">How it works</a>
-        </div>
-        <div class="grid">
-          <div class="feature">🎙 Voice control</div>
-          <div class="feature">🎮 Controller support</div>
-          <div class="feature">🌓 Dark/Light</div>
-          <div class="feature">🧊 Glass UI</div>
-          <div class="feature">⚡ PWA offline</div>
-          <div class="feature">🔊 Spoken prompts</div>
-        </div>
+  <section class="hero">
+    <div class="card">
+      <h2 class="title">A sleek memory game you can play by <em>voice</em>, <em>keys</em> or <em>gamepad</em>.</h2>
+      <p class="muted">Glassmorphism UI, dark/light mode, spoken prompts, and gentle background music. Installable as a PWA.</p>
+      <div class="cta">
+        <a class="btn" href="./aigameglass.html">Play Now</a>
+        <a class="ghost" href="#about">How it works</a>
       </div>
-      <div class="card">
-        <div class="shot"></div>
-        <p class="muted" style="margin:.7rem 0 0">Preview — the full game opens when you click <b>Play Now</b>.</p>
+      <div class="grid">
+        <div class="feature">🎙 Voice control</div>
+        <div class="feature">🎮 Controller support</div>
+        <div class="feature">🌓 Dark/Light</div>
+        <div class="feature">🧊 Glass UI</div>
+        <div class="feature">⚡ PWA offline</div>
+        <div class="feature">🔊 Spoken prompts</div>
       </div>
-    </section>
+    </div>
+    <div class="card">
+      <div class="shot"></div>
+      <p class="muted" style="margin:.7rem 0 0">Preview — the full game opens when you click <b>Play Now</b>.</p>
+    </div>
+  </section>
 
-    <section id="about" style="margin-top:28px">
-      <div class="card">
-        <h3 style="margin:0 0 8px">How to play</h3>
-        <ul>
-          <li>Flip two tiles to find matching pairs.</li>
-          <li>Use voice (say “start”, “hard”, “flip 7”), keyboard arrows + Enter, or a gamepad.</li>
-          <li>Switch themes, toggle music, and try Difficult mode for more tiles.</li>
-        </ul>
-      </div>
-    </section>
+  <section id="about" style="margin-top:28px">
+    <div class="card">
+      <h3 style="margin:0 0 8px">How to play</h3>
+      <ul>
+        <li>Flip two tiles to find matching pairs.</li>
+        <li>Use voice (say "start", "hard", "flip 7"), keyboard arrows + Enter, or a gamepad.</li>
+        <li>Switch themes, toggle music, and try Difficult mode for more tiles.</li>
+      </ul>
+    </div>
+  </section>
 
-    <footer>© HETSI TEWAR — Built with HTML/CSS/JS</footer>
-  </div>
+  <footer>© HETSI TEWAR — Built with HTML/CSS/JS</footer>
+</div>
+
+<!-- Voice Controls -->
+<div class="voice-controls">
+  <div class="voice-indicator" id="voiceIndicator"></div>
+  <div class="voice-status" id="voiceStatus"></div>
+  <button class="voice-btn" id="voiceBtn" title="Click or say 'Hey Game'">🎤</button>
+</div>
 
 <script>
-// ✅ Register the service worker
+// Register Service Worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./service-worker.js')
     .then(reg => console.log('✅ Service Worker registered:', reg.scope))
     .catch(err => console.error('❌ Service Worker failed:', err));
 }
 
-// ✅ Install prompt button
-let deferredPrompt = null;
+// PWA install
+let deferredPrompt;
 const installBtn = document.getElementById('installBtn');
-
-// Hide button initially
 installBtn.hidden = true;
 
-// Listen for install prompt event
 window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();       // Stop default prompt
-  deferredPrompt = e;       // Save event
-  installBtn.hidden = false; // Show the button
+  e.preventDefault();
+  deferredPrompt = e;
+  installBtn.hidden = false;
+  installBtn.textContent = "Click to Install App";
 });
 
-// Click handler for install button
 installBtn.addEventListener('click', async () => {
   if (!deferredPrompt) return;
-  deferredPrompt.prompt();        // Show browser install prompt
-  const choice = await deferredPrompt.userChoice; // User choice (accepted/declined)
-  deferredPrompt = null;          // Reset
-  installBtn.hidden = true;       // Hide button after install attempt
+  deferredPrompt.prompt();
+  const choice = await deferredPrompt.userChoice;
+  if (choice.outcome === 'accepted') {
+    console.log('User accepted the PWA install');
+  } else {
+    console.log('User dismissed the PWA install');
+  }
+  deferredPrompt = null;
+  installBtn.hidden = true;
 });
 
-// Hide button if app already installed
 if (window.matchMedia('(display-mode: standalone)').matches) {
   installBtn.hidden = true;
 }
 
+// ===== VOICE USER INTERFACE =====
+const voiceBtn = document.getElementById('voiceBtn');
+const voiceIndicator = document.getElementById('voiceIndicator');
+const voiceStatus = document.getElementById('voiceStatus');
+
+let recognition = null;
+let isListening = false;
+let synth = window.speechSynthesis;
+
+// Initialize Speech Recognition
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = 'en-US';
+
+  recognition.onstart = () => {
+    isListening = true;
+    voiceBtn.classList.add('listening');
+    voiceBtn.textContent = '🎙️';
+    showIndicator('Listening...');
+  };
+
+  recognition.onend = () => {
+    isListening = false;
+    voiceBtn.classList.remove('listening');
+    voiceBtn.textContent = '🎤';
+    hideIndicator();
+  };
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript.toLowerCase().trim();
+    console.log('Heard:', transcript);
+    showStatus(`You said: "${transcript}"`);
+    processVoiceCommand(transcript);
+  };
+
+  recognition.onerror = (event) => {
+    console.error('Speech recognition error:', event.error);
+    showStatus(`Error: ${event.error}`);
+    setTimeout(hideStatus, 2000);
+  };
+} else {
+  voiceBtn.style.display = 'none';
+  console.warn('Speech recognition not supported');
+}
+
+// Voice button click handler
+voiceBtn.addEventListener('click', () => {
+  if (!recognition) return;
+  
+  if (isListening) {
+    recognition.stop();
+  } else {
+    recognition.start();
+  }
+});
+
+// Process voice commands
+function processVoiceCommand(command) {
+  // Normalize command
+  const cmd = command.replace(/[.,!?]/g, '').trim();
+  
+  // Play/Start game commands
+  if (cmd.includes('play') || cmd.includes('start') || cmd.includes('begin') || 
+      cmd.includes('launch') || cmd === 'go') {
+    speak('Starting the game');
+    setTimeout(() => {
+      window.location.href = './aigameglass.html';
+    }, 800);
+    return;
+  }
+  
+  // Install app
+  if (cmd.includes('install') || cmd.includes('download')) {
+    if (!installBtn.hidden) {
+      speak('Installing app');
+      installBtn.click();
+    } else {
+      speak('App is already installed or installation is not available');
+    }
+    return;
+  }
+  
+  // Scroll to "How it works"
+  if (cmd.includes('how') || cmd.includes('about') || cmd.includes('instructions') || 
+      cmd.includes('help')) {
+    speak('Here is how to play');
+    document.getElementById('about').scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+  
+  // Scroll to top
+  if (cmd.includes('top') || cmd.includes('home') || cmd.includes('beginning')) {
+    speak('Going to top');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  
+  // Read features
+  if (cmd.includes('features') || cmd.includes('what can') || cmd.includes('tell me more')) {
+    speak('This game has voice control, controller support, dark and light themes, glassmorphism UI, offline PWA support, and spoken prompts');
+    return;
+  }
+  
+  // Unknown command
+  speak('Sorry, I didn\'t understand that. Try saying play, install, help, or features');
+}
+
+// Text-to-speech function
+function speak(text) {
+  if (!synth) return;
+  
+  // Cancel any ongoing speech
+  synth.cancel();
+  
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+  utterance.volume = 0.8;
+  
+  synth.speak(utterance);
+  showStatus(`Speaking: "${text}"`);
+  
+  utterance.onend = () => {
+    setTimeout(hideStatus, 1500);
+  };
+}
+
+// UI helper functions
+function showIndicator(text) {
+  voiceIndicator.textContent = text;
+  voiceIndicator.classList.add('show');
+}
+
+function hideIndicator() {
+  voiceIndicator.classList.remove('show');
+}
+
+function showStatus(text) {
+  voiceStatus.textContent = text;
+  voiceStatus.classList.add('show');
+}
+
+function hideStatus() {
+  voiceStatus.classList.remove('show');
+}
+
+// Welcome message on page load
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    if (recognition) {
+      speak('Welcome to Glass Memory Match! Say play to start, or click the microphone to use voice commands');
+    }
+  }, 1000);
+});
+
+// Continuous listening mode (optional - activate with "hey game")
+let continuousMode = false;
+if (recognition) {
+  recognition.addEventListener('result', (event) => {
+    const transcript = event.results[0][0].transcript.toLowerCase();
+    if (transcript.includes('hey game') || transcript.includes('hi game')) {
+      continuousMode = true;
+      speak('Yes, I\'m listening');
+      setTimeout(() => {
+        if (recognition) recognition.start();
+      }, 1500);
+    }
+  });
+}
 </script>
+
 </body>
 </html>
-
-
