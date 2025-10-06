@@ -1,57 +1,52 @@
 // ===========================
 // Glass Memory Match Service Worker
 // ===========================
+const CACHE_NAME = 'mm-v6';  // bump this to force updates
 
-const CACHE_NAME = 'mm-v3';  // update version to force refresh
+// Only include files that actually exist in your repo root
 const ASSETS = [
   './',
   './index.html',
   './aigameglass.html',
   './manifest.json',
   './icon.192.png',
-  './icon.512.png',
-  './style.css',  // if you have external CSS
-  './script.js'   // if you have external JS
+  './icon.512.png'
+  // add './screenshot1.png' here if you want it cached offline
 ];
 
-// Install event – cache all assets
+// Install: precache core assets
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        return cache.addAll(ASSETS);
-      })
-      .catch(err => console.error('SW install error:', err))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
 });
 
-// Activate event – delete old caches
+// Activate: clean old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys()
-      .then((keys) => {
-        return Promise.all(
-          keys.filter((key) => key !== CACHE_NAME)
-              .map((key) => caches.delete(key))
-        );
-      })
-      .then(() => self.clients.claim())
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
   );
 });
 
-// Fetch event – respond from cache, fallback to network
+// Fetch: cache-first for static; network with HTML fallback for navigation
 self.addEventListener('fetch', (event) => {
+  const req = event.request;
+
+  // Treat as a navigation request if mode is navigate OR Accept includes HTML
+  const isNav =
+    req.mode === 'navigate' ||
+    (req.method === 'GET' && req.headers.get('accept')?.includes('text/html'));
+
   event.respondWith(
-    caches.match(event.request)
-      .then((cached) => {
-        if (cached) return cached;
-        return fetch(event.request).catch(() => {
-          // fallback to homepage for navigation requests
-          if (event.request.mode === 'navigate') {
-            return caches.match('./index.html');
-          }
-        });
-      })
+    caches.match(req).then((cached) => {
+      if (cached) return cached;
+
+      return fetch(req).catch(() => {
+        if (isNav) return caches.match('./index.html'); // offline fallback
+      });
+    })
   );
 });
