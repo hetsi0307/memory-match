@@ -321,6 +321,27 @@ window.addEventListener('load', () => {
 ['click','touchstart','keydown'].forEach(evt => {
   window.addEventListener(evt, tryWelcome, { once:true, passive:true });
 });
+
+  // --- Force welcome line after first user interaction (works on mobile) ---
+function enableSpeechAfterInteraction() {
+  try {
+    // Attempt immediate playback if possible
+    speak(WELCOME_LINE);
+  } catch (e) {
+    console.warn('Speech synthesis blocked until interaction.');
+  }
+
+  // Clean up after first interaction
+  ['click','touchstart','keydown'].forEach(evt =>
+    window.removeEventListener(evt, enableSpeechAfterInteraction)
+  );
+}
+
+['click','touchstart','keydown'].forEach(evt =>
+  window.addEventListener(evt, enableSpeechAfterInteraction, { once:true, passive:true })
+);
+
 </script>
 </body>
 </html>
+
