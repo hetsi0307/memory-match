@@ -264,7 +264,11 @@ function processVoiceCommand(command) {
 
 // Text-to-speech function
 function speak(text) {
-  if (!synth) return;
+  if (!synth) {
+    showStatus(`🔊 ${text}`);
+    setTimeout(hideStatus, 2000);
+    return;
+  }
   
   // Cancel any ongoing speech
   synth.cancel();
@@ -272,14 +276,27 @@ function speak(text) {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.rate = 1.0;
   utterance.pitch = 1.0;
-  utterance.volume = 0.8;
+  utterance.volume = 1.0; // Max volume
   
-  synth.speak(utterance);
-  showStatus(`Speaking: "${text}"`);
+  // Show visual feedback immediately
+  showStatus(`🔊 ${text}`);
+  
+  utterance.onstart = () => {
+    console.log('Speech started:', text);
+  };
   
   utterance.onend = () => {
-    setTimeout(hideStatus, 1500);
+    console.log('Speech ended');
+    setTimeout(hideStatus, 2000);
   };
+  
+  utterance.onerror = (e) => {
+    console.error('Speech error:', e);
+    showStatus(`⚠️ Speech error: ${e.error}`);
+    setTimeout(hideStatus, 3000);
+  };
+  
+  synth.speak(utterance);
 }
 
 // UI helper functions
@@ -301,13 +318,26 @@ function hideStatus() {
   voiceStatus.classList.remove('show');
 }
 
-// Welcome message on page load
+// Welcome message on page load - wait for voices to load
 window.addEventListener('load', () => {
-  setTimeout(() => {
-    if (recognition) {
-      speak('Welcome to Glass Memory Match! Say play to start, or click the microphone to use voice commands');
+  // Load voices first
+  if (synth) {
+    if (synth.getVoices().length === 0) {
+      synth.addEventListener('voiceschanged', () => {
+        setTimeout(() => {
+          if (recognition) {
+            speak('Welcome to Glass Memory Match! Say play to start, or click the microphone to use voice commands');
+          }
+        }, 500);
+      }, { once: true });
+    } else {
+      setTimeout(() => {
+        if (recognition) {
+          speak('Welcome to Glass Memory Match! Say play to start, or click the microphone to use voice commands');
+        }
+      }, 1500);
     }
-  }, 1000);
+  }
 });
 
 // Continuous listening mode (optional - activate with "hey game")
