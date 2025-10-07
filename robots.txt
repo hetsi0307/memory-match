@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://hetsi0307.github.io/memory-match/sitemap.xml
